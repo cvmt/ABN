@@ -52,6 +52,7 @@ CIFAR-100 Model|Best Precision|Steps
 1001 layer bottleneck|78.2%|~70k
 28-10 wide|78.3%|~70k
 16-4* wide|
+
 <b>Prerequisite:</b>
 
 1. Install TensorFlow, Bazel.
