@@ -37,6 +37,8 @@ tf.app.flags.DEFINE_integer('num_units', 5,
                             'Train batch size.')
 tf.app.flags.DEFINE_bool('wide', False,
                          'Whether wide residual network.')
+tf.app.flags.DEFINE_bool('bottle_neck', False,
+                         'Whether use bottleneck struct.')
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 tf.app.flags.DEFINE_string('train_dir', '',
                            'Directory to keep training outputs.')
@@ -55,9 +57,9 @@ tf.app.flags.DEFINE_integer('num_gpus', 0,
 
 def train(hps):
   """Training loop."""
-
+  train_data_path='/home/cvmt/ABN/data/cifar10/data_batch*' if FLAGS.dataset=='cifar10' else '/home/cvmt/ABN/data/cifar100/train.bin'
   images, labels = cifar_input.build_input(
-      FLAGS.dataset, FLAGS.train_data_path, hps.batch_size, FLAGS.mode)
+      FLAGS.dataset, train_data_path, hps.batch_size, FLAGS.mode)
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
   model.build_graph()
 
@@ -128,7 +130,7 @@ def train(hps):
       chief_only_hooks=[summary_hook],
       # Since we provide a SummarySaverHook, we need to disable default
       # SummarySaverHook. To do that we set save_summaries_steps to 0.
-      save_checkpoint_secs=300,
+      save_checkpoint_secs=600,
       save_summaries_steps=0,
       config=tf.ConfigProto(allow_soft_placement=True)) as mon_sess:
     while not mon_sess.should_stop():
@@ -137,8 +139,9 @@ def train(hps):
 
 def evaluate(hps):
   """Eval loop."""
+  eval_data_path = '/home/cvmt/ABN/data/cifar10/test_batch.bin' if FLAGS.dataset == 'cifar10' else '/home/cvmt/ABN/data/cifar100/test.bin'
   images, labels = cifar_input.build_input(
-      FLAGS.dataset, FLAGS.eval_data_path, hps.batch_size, FLAGS.mode)
+      FLAGS.dataset, eval_data_path, hps.batch_size, FLAGS.mode)
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
   model.build_graph()
   saver = tf.train.Saver()
@@ -216,7 +219,7 @@ def main(_):
                              min_lrn_rate=0.0001,
                              lrn_rate=0.1,
                              num_residual_units=FLAGS.num_units,
-                             use_bottleneck=False,
+                             use_bottleneck=FLAGS.bottle_neck,
                              weight_decay_rate=0.0005 if FLAGS.wide else 0.0002,
                              relu_leakiness=0.0,
                              optimizer='mom',
