@@ -113,11 +113,11 @@ def train(hps):
           self._lrn_rate = 0.0008
       else:
 
-        if train_step < 40000:
+        if epoch < 100:
           self._lrn_rate = 0.1
-        elif train_step < 60000:
+        elif epoch < 140:
           self._lrn_rate = 0.01
-        elif train_step < 80000:
+        elif train_step < 180:
           self._lrn_rate = 0.001
         else:
           self._lrn_rate = 0.0001
