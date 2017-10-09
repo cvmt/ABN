@@ -30,7 +30,7 @@ from tensorflow.python.training import moving_averages
 
 
 HParams = namedtuple('HParams',
-                     'batch_size, num_classes, min_lrn_rate, lrn_rate, '
+                     'batch_size, num_classes, min_lrn_rate, lrn_rate, flag_bn,'
                      'num_residual_units, use_bottleneck, weight_decay_rate, '
                      'relu_leakiness, optimizer,wide')
 
@@ -132,6 +132,8 @@ class ResNet(object):
     """Build training specific ops for the graph."""
     self.lrn_rate = tf.constant(self.hps.lrn_rate, tf.float32)
     tf.summary.scalar('learning_rate', self.lrn_rate)
+    self.flag_bn = tf.constant(self.hps.flag_bn, tf.int8)
+    tf.summary.scalar('fl_bn', self.flag_bn)
 
     trainable_variables = tf.trainable_variables()
     grads = tf.gradients(self.cost, trainable_variables)
@@ -140,6 +142,8 @@ class ResNet(object):
       optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
     elif self.hps.optimizer == 'mom':
       optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9)
+    elif self.hps.optimizer=='adam':
+      optimizer= tf.train.AdamOptimizer(self.lrn_rate)
 
     apply_op = optimizer.apply_gradients(
         zip(grads, trainable_variables),
@@ -189,8 +193,14 @@ class ResNet(object):
         tf.summary.histogram(mean.op.name, mean)
         tf.summary.histogram(variance.op.name, variance)
       # epsilon used to be 1e-5. Maybe 0.001 solves NaN problem in deeper net.
-      y = tf.nn.batch_normalization(
-          x, mean, variance, beta, gamma, 0.001)
+      if self.mode == 'train' and self.hps.flag_bn == True:
+        y = tf.nn.batch_normalization(
+            #x, mean, variance, beta, gamma, 0.001)
+            x, moving_mean, moving_variance, beta, gamma, 0.001)
+      else:
+        y = tf.nn.batch_normalization(
+            x, mean, variance, beta, gamma, 0.001)
+          #x, moving_mean, moving_variance, beta, gamma, 0.001)
       y.set_shape(x.get_shape())
       return y
 
