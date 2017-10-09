@@ -30,7 +30,7 @@ from tensorflow.python.training import moving_averages
 
 
 HParams = namedtuple('HParams',
-                     'batch_size, num_classes, min_lrn_rate, lrn_rate, flag_bn,'
+                     'batch_size, num_classes, min_lrn_rate, lrn_rate, flag_bn, bn_sz,'
                      'num_residual_units, use_bottleneck, weight_decay_rate, '
                      'relu_leakiness, optimizer,wide')
 
@@ -154,7 +154,19 @@ class ResNet(object):
 
   # TODO(xpan): Consider batch_norm in contrib/layers/python/layers/layers.py
   def _batch_norm(self, name, x):
+      n_parts = x.get_shape()[0] // self.hps.bn_sz
+      if self.mode == 'train':
+        xs = tf.split(x, n_parts, 0)
+        ys = []
+        for i, xi in enumerate(xs):
+              ys.append(self._batch_norm_part(name + "%d"%i, xi))
+        return tf.concat(ys, 0)
+      else:
+        return self._batch_norm_part(name + "%d"%(n_parts - 1), x)
+
+  def _batch_norm_part(self, name, x):
     """Batch normalization."""
+
     with tf.variable_scope(name):
       params_shape = [x.get_shape()[-1]]
 
@@ -181,6 +193,8 @@ class ResNet(object):
             moving_mean, mean, 0.9))
         self._extra_train_ops.append(moving_averages.assign_moving_average(
             moving_variance, variance, 0.9))
+        # tf.summary.histogram(moving_mean.op.name, moving_mean)
+        # tf.summary.histogram(moving_variance.op.name, moving_variance)
       else:
         mean = tf.get_variable(
             'moving_mean', params_shape, tf.float32,
@@ -192,6 +206,7 @@ class ResNet(object):
             trainable=False)
         tf.summary.histogram(mean.op.name, mean)
         tf.summary.histogram(variance.op.name, variance)
+
       # epsilon used to be 1e-5. Maybe 0.001 solves NaN problem in deeper net.
       if self.mode == 'train' and self.hps.flag_bn == True:
         y = tf.nn.batch_normalization(

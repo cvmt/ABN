@@ -33,6 +33,8 @@ tf.app.flags.DEFINE_string('eval_data_path', '',
                            'Filepattern for eval data')
 tf.app.flags.DEFINE_integer('batch_size', 128,
                             'Train batch size.')
+tf.app.flags.DEFINE_integer('bn_sz', 16,
+                            'Train bn size.')
 tf.app.flags.DEFINE_integer('num_units', 5,
                             'Train batch size.')
 tf.app.flags.DEFINE_bool('wide', False,
@@ -234,6 +236,7 @@ def main(_):
                              min_lrn_rate=0.0001,
                              lrn_rate=0.1,
                              flag_bn=0,
+                             bn_sz=FLAGS.bn_sz,
                              num_residual_units=FLAGS.num_units,
                              use_bottleneck=FLAGS.bottle_neck,
                              weight_decay_rate=0.0005 if FLAGS.wide else 0.0002,
