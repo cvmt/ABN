@@ -59,7 +59,7 @@ tf.app.flags.DEFINE_integer('num_gpus', 0,
 
 def train(hps):
   """Training loop."""
-  train_data_path='/home/ganji15/ABN/data/cifar10/data_batch*' if FLAGS.dataset=='cifar10' else '/home/ganji15/ABN/data/cifar100/train.bin'
+  train_data_path='/home/cvmt/ABN/data/cifar10/data_batch*' if FLAGS.dataset=='cifar10' else '/home/cvmt/ABN/data/cifar100/train.bin'
   images, labels = cifar_input.build_input(
       FLAGS.dataset, train_data_path, hps.batch_size, FLAGS.mode)
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)

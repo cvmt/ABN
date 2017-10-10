@@ -159,15 +159,14 @@ class ResNet(object):
         xs = tf.split(x, n_parts, 0)
         ys = []
         for i, xi in enumerate(xs):
-              ys.append(self._batch_norm_part(name, xi))
+              ys.append(self._batch_norm_part(name, xi,i))
         return tf.concat(ys, 0)
       else:
         return self._batch_norm_part(name, x)
 
-  def _batch_norm_part(self, name, x):
+  def _batch_norm_part(self, name, x,id):
     """Batch normalization."""
-
-    with tf.variable_scope(name, reuse=True):
+    with tf.variable_scope(name,reuse=True if id > 0 else False):
       params_shape = [x.get_shape()[-1]]
 
       beta = tf.get_variable(
