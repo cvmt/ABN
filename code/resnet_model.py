@@ -162,7 +162,7 @@ class ResNet(object):
               ys.append(self._batch_norm_part(name, xi,i))
         return tf.concat(ys, 0)
       else:
-        return self._batch_norm_part(name, x)
+        return self._batch_norm_part(name, x, 0)
 
   def _batch_norm_part(self, name, x,id):
     """Batch normalization."""
